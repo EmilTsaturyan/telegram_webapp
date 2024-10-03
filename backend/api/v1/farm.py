@@ -5,7 +5,7 @@ from fastapi import APIRouter, Depends, BackgroundTasks
 from sqlalchemy.future import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from models import Farm
+from models import Farm, Reward
 from db import database
 from utils import validate_dependency, user as user_crud
 from core import settings
@@ -34,9 +34,11 @@ async def start_farm(
         session.add(farm) 
         await session.commit()
 
+    reward = await session.get(Reward, user.get('id'))
+
 
     total_duration = settings.farm_seconds
-    plus_every_second = settings.farm_reward / total_duration
+    plus_every_second = reward.day * 0.01
     return {
         'plus_every_second': plus_every_second,
         'total_duration': total_duration,

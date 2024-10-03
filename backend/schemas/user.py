@@ -73,7 +73,6 @@ class GetOrCreate(BaseModel):
     id: int
     first_name: str
     day: int | None = None
-    coinsCount: int | None = None
     heSeeWelcomeScreen: bool = False
     age: int | None = None
     age_coins: int | None = None

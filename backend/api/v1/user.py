@@ -4,8 +4,8 @@ from fastapi import APIRouter, Depends
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from utils import user as user_crud, validate_dependency, check_streak, calculate_reward, already_claimed_today
-from schemas import UserCreate, UserResponse, UserCreateBody, GetOrCreate, SaveWallet
+from utils import user as user_crud, validate_dependency, check_streak, already_claimed_today
+from schemas import UserCreate, UserCreateBody, GetOrCreate, SaveWallet
 from db import database
 from models import User, Reward, Wallet
 from core import settings
@@ -25,27 +25,21 @@ async def get_or_create(
     isPremium = user_create_body.isPremium
 
     db_user = await session.get(User, id)
-    coinsCount = None
     if db_user:
         reward = await session.get(Reward, db_user.id)
         if not already_claimed_today(reward.lastReward):
             if check_streak(reward.lastReward):
                 reward.day = 1
-                reward.coinsCount = calculate_reward(1)
             else:
                 reward.day += 1
-                reward.coinsCount = calculate_reward(reward.day)
         
             reward.lastReward = datetime.now()
-            if reward.day == 10:
+            if reward.day == 8:
                 reward.day = 1
-            await user_crud.update_wallet(session, db_user.id, reward.coinsCount)
             await session.commit()
-            coinsCount = reward.coinsCount
         return {
             'id': db_user.id,
             'first_name': db_user.first_name,
-            'coinsCount': coinsCount,
             'day': reward.day,
             'heSeeWelcomeScreen': True
         }
@@ -69,7 +63,6 @@ async def get_or_create(
         'id': new_user.id,
         'first_name': new_user.first_name,
         'day': new_reward.day,
-        'coinsCount': new_reward.coinsCount,
         'heSeeWelcomeScreen': False,
         'age': age,
         'age_coins': coins,
@@ -82,6 +75,7 @@ async def get_or_create(
 @router.get('/me')
 async def get_me(session: AsyncSession = Depends(database.get_async_session), user = Depends(validate_dependency)):
     user = await user_crud.get_user(user.get('id'), session)
+    reward = await session.get(Reward, user.get('id'))
     
     rewards = 0
     completedTasks = user.account.completedTasks
@@ -91,11 +85,10 @@ async def get_me(session: AsyncSession = Depends(database.get_async_session), us
     farm = user.wallet.farm
     time_passed = None
     need_to_claim = False
-    plus_every_second = None
+    plus_every_second = reward.day * 0.01
     current_farm_reward = None
     total_duration = settings.farm_seconds
     if farm:
-        plus_every_second = settings.farm_reward / total_duration
         time_passed = datetime.now() - farm.created_at
         if time_passed > timedelta(seconds=total_duration):
             need_to_claim = True
