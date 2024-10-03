@@ -1,7 +1,7 @@
 from .cache import SimpleCache, CacheManager
 
 # Create a simple in-memory cache
-cache = SimpleCache()
+simple_cache = SimpleCache()
 
 # Create a CacheManager instance with the SimpleCache
-cache_manager = CacheManager(cache=cache)
+cache_manager = CacheManager(cache=simple_cache)

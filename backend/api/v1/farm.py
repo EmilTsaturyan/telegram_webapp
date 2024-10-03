@@ -1,6 +1,6 @@
 from datetime import datetime, timedelta
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, BackgroundTasks
 
 from sqlalchemy.future import select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -9,16 +9,21 @@ from models import Farm
 from db import database
 from utils import validate_dependency, user as user_crud
 from core import settings
+from background_tasks import tasks
 
 
 router = APIRouter(tags=['Farm'])
 
 
+
 @router.post('/start')
 async def start_farm(
+    background_tasks: BackgroundTasks,
     session: AsyncSession = Depends(database.get_async_session),
-    user: dict = Depends(validate_dependency)
+    user: dict = Depends(validate_dependency),
 ):
+    background_tasks.add_task(tasks.send_farm_claim_notification, user.get('id'))
+
     stmt = select(Farm).filter(Farm.wallet == user.get('id')).filter(Farm.status == 'Process')
     result = await session.execute(stmt)
 

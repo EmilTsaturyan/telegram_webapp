@@ -63,3 +63,26 @@ async def check_task(
     await user_crud.update_wallet(session, user.get('id'), task.amount)
 
     return {"completed": True}
+
+
+@router.post('/check/referral')
+async def check_referral(
+    count: int, 
+    session: AsyncSession = Depends(database.get_async_session),
+    user: dict = Depends(validate_dependency)
+    ):
+    '''
+    Check if account has referred a specific number of accounts.
+    return {"referral_valid": True} if account have referred a specific number of accounts
+    return {"referral_valid": False} if account have not referred a specific number of accounts
+    '''
+    result = await session.execute(select(Account).options(
+        selectinload(Account.reffers)
+    ).filter(Account.id == user.get('id')))
+    account = result.scalars().first()
+
+    if account:
+        if len(account.reffers) >= count:
+            return {"referral_valid": True}
+        
+    return {"referral_valid": False}

@@ -115,8 +115,8 @@ class Wallet(Base):
 
     def __str__(self) -> str:
         return str(self.id)
-
-
+    
+        
 class Reward(Base):
     __tablename__ = 'rewards'
 

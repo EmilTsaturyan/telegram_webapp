@@ -5,6 +5,7 @@ class Settings(BaseSettings):
     db_url: str
     db_echo: bool
     telegram_token: str
+    telegram_channel_id: str
     webapp_url: str
     admin_username: str
     admin_password: str

@@ -6,7 +6,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 
 from db import Base, database
-from api.v1 import router
+from api import router, partners_api_router
 from utils import validate_dependency
 from core import settings
 from admin import create_admin
@@ -24,7 +24,8 @@ async def lifespan(app: FastAPI):
 
 app = FastAPI(lifespan=lifespan)
 
-app.include_router(router=router, prefix='/api/v1', dependencies=[Depends(validate_dependency)])
+app.include_router(router=router, prefix='/api', dependencies=[Depends(validate_dependency)])
+app.include_router(router=partners_api_router, prefix='/api')
 app.mount('/static', StaticFiles(directory='static'), name='static')
 admin = create_admin(app)
 

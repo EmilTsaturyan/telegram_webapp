@@ -2,7 +2,6 @@ from hashlib import sha256
 import hmac
 import json
 from urllib.parse import parse_qsl
-import json
 
 from fastapi import HTTPException, status, Header
 from core import settings
@@ -26,21 +25,20 @@ def parse_init_data(token: str, raw_init_data: str):
 
 
 def validate_dependency(User_Init_Data: str = Header(None)):
-    if User_Init_Data != 'test':
-        if not User_Init_Data or not validate_init_data(settings.telegram_token, User_Init_Data):
-            raise HTTPException(
-                status_code=status.HTTP_401_UNAUTHORIZED,
-                detail='Invalid telegram init data'
-            )
-        result = {}
-        for key, value in parse_qsl(User_Init_Data):
-            try:
-                value = json.loads(value)
-            except json.JSONDecodeError:
-                result[key] = value
-            else:
-                result[key] = value
-        return result.get('user')
+    if not User_Init_Data or not validate_init_data(settings.telegram_token, User_Init_Data):
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail='Invalid telegram init data'
+        )
+    result = {}
+    for key, value in parse_qsl(User_Init_Data):
+        try:
+            value = json.loads(value)
+        except json.JSONDecodeError:
+            result[key] = value
+        else:
+            result[key] = value
+    return result.get('user')
 
 
 def validate_init_data(token, raw_init_data):

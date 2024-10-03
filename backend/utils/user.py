@@ -1,4 +1,5 @@
 import base64
+from datetime import datetime
 
 from sqlalchemy import func
 from sqlalchemy.orm import selectinload, aliased, with_loader_criteria
@@ -112,8 +113,44 @@ def calculate_new_account_reward(age: int, isPremium: bool = False) -> int:
     return reward
 
 
-def calculate_age(id: int) -> int:
-    return 1
+def calculate_age(telegram_id: int) -> int:
+    id_str = str(telegram_id)
+    num_digits = len(id_str)
+    
+    # Get the current date
+    current_date = datetime.now()
+
+    # Return the estimated creation date
+    if num_digits >= 10:
+        if id_str.startswith('17') or id_str.startswith('16'):
+            creation_date = datetime(2021, 1, 1)
+        elif id_str.startswith('15') or id_str.startswith('14'):
+            creation_date = datetime(2020, 10, 1)
+        elif id_str.startswith('13'):
+            creation_date = datetime(2020, 4, 1)
+        elif id_str.startswith('12'):
+            creation_date = datetime(2019, 11, 1)
+        elif id_str.startswith('11'):
+            creation_date = datetime(2019, 7, 1)
+    elif num_digits == 9:
+        if id_str.startswith('19'):
+            creation_date = datetime(2019, 4, 1)
+        elif id_str.startswith('18'):
+            creation_date = datetime(2018, 11, 1)
+        elif id_str.startswith('17'):
+            creation_date = datetime(2018, 7, 1)
+        elif id_str.startswith('16'):
+            creation_date = datetime(2018, 2, 1)
+        elif id_str.startswith('15'):
+            creation_date = datetime(2016, 12, 1)
+        elif id_str.startswith('14'):
+            creation_date = datetime(2015, 1, 1)
+    elif num_digits == 8 or num_digits <= 8:
+        creation_date = datetime(2014, 12, 1)
+
+    # Calculate the account age in years
+    account_age_years = (current_date - creation_date).days // 365
+    return account_age_years
 
 
 def calculate_account_age_name(age: int) -> tuple[str, int | float]:
@@ -144,10 +181,7 @@ async def get_user_rank(session: AsyncSession, wallet_id: int):
         Wallet.coins,
         func.rank().over(order_by=Wallet.coins.desc()).label("rank")
     ).subquery()
-
-    # Aliased version to query from the subquery
-    ranked_wallets = aliased(Wallet, rank_query)
-
+    
     # Final query to get the rank of the specific wallet_id
     query = select(rank_query.c.rank).where(rank_query.c.id == wallet_id)
 

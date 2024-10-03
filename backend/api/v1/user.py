@@ -59,7 +59,7 @@ async def get_or_create(
     new_user, new_reward = await user_crud.create_user(user_create, inviteCode, isPremium, session)
     new_reward.lastReward = datetime.now()
 
-    age = 10
+    age = user_crud.calculate_age(new_user.id)
     coins = user_crud.calculate_new_account_reward(age, isPremium)
     title, percent = user_crud.calculate_account_age_name(age)
 
